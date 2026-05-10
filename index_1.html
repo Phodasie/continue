@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Continue — A Collaborative Story Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fffdf7;
+    --ink: #1a1714;
+    --ink-muted: #6b6560;
+    --ink-faint: #b0a99f;
+    --accent: #2d4a3e;
+    --accent-light: #e8f0ec;
+    --accent-text: #1a2e25;
+    --warn: #7a3b1e;
+    --warn-bg: #fdf0e8;
+    --border: rgba(26,23,20,0.12);
+    --border-strong: rgba(26,23,20,0.22);
+    --radius: 4px;
+    --radius-lg: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .page {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .masthead {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .masthead-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+
+  .masthead h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .masthead h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .masthead .tagline {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+
+  input[type=text], textarea, select {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-bottom: 1rem;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type=text]:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6560' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+
+  textarea { height: 120px; resize: vertical; line-height: 1.6; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent-text); border-color: var(--accent-text); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-muted);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--bg); color: var(--ink); }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem; }
+
+  .hint {
+    background: var(--accent-light);
+    color: var(--accent-text);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+  }
+
+  .clue-box {
+    border-left: 3px solid var(--accent);
+    padding: 10px 16px;
+    margin-bottom: 1rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  .error { color: var(--warn); font-size: 13px; margin-top: -8px; margin-bottom: 10px; }
+
+  .code-display {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: 10px;
+    color: var(--accent);
+    display: block;
+    margin: 8px 0 16px;
+  }
+
+  .player-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+  .player-chip {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .player-chip.host { border-color: var(--accent); color: var(--accent); }
+
+  .progress-track { background: var(--border); border-radius: 999px; height: 3px; margin-bottom: 6px; }
+  .progress-fill { background: var(--accent); border-radius: 999px; height: 3px; transition: width 0.4s; }
+  .progress-label { font-size: 12px; color: var(--ink-faint); margin-bottom: 1.25rem; }
+
+  .story-block { margin-bottom: 1.5rem; }
+  .story-author {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .story-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--ink);
+    font-style: italic;
+  }
+  .story-divider {
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 18px;
+    margin: 12px 0;
+    letter-spacing: 6px;
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+
+  .success-hint {
+    background: var(--accent-light);
+    color: var(--accent-text);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 1.25rem 0.75rem 3rem; }
+    .card { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="masthead">
+    <p class="masthead-eyebrow">A collaborative story game</p>
+    <h1>Continue</h1>
+    <p class="tagline">Each writer sees only the last few words.<br>Together you write something wonderfully strange.</p>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script>
+const STORAGE_PREFIX = 'continue_game_';
+const CLUE_WORDS = 8;
+
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 5; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getLastWords(text, n) {
+  return text.trim().split(/\s+/).slice(-n).join(' ');
+}
+
+async function saveGame(code, game) {
+  try { await window.storage.set(STORAGE_PREFIX + code, JSON.stringify(game), true); } catch(e) {}
+}
+
+async function loadGame(code) {
+  try {
+    const r = await window.storage.get(STORAGE_PREFIX + code.toUpperCase(), true);
+    return r ? JSON.parse(r.value) : null;
+  } catch(e) { return null; }
+}
+
+let S = { view: 'home', game: null, code: null, name: '' };
+
+function render() {
+  document.getElementById('app').innerHTML = views[S.view]();
+  bind();
+}
+
+const views = {
+  home: () => `
+    <div class="card">
+      <p class="card-title">How to play</p>
+      <div class="hint">
+        One person creates a game and shares a 5-letter code.<br>
+        Friends join and get a random turn order.<br>
+        Each writer sees only the last ${CLUE_WORDS} words of what came before.<br>
+        When everyone's done, the full story is revealed.
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="go-create">Create a game</button>
+        <button class="btn btn-ghost" id="go-join">Join a game</button>
+      </div>
+    </div>
+  `,
+
+  create: () => `
+    <div class="card">
+      <p class="card-title">Create a game</p>
+      <label>Your name</label>
+      <input type="text" id="f-name" placeholder="e.g. Moe" value="${S.name}" maxlength="30" />
+      <label>Turns per player</label>
+      <select id="f-turns">
+        <option value="1">1 turn each</option>
+        <option value="2" selected>2 turns each</option>
+        <option value="3">3 turns each</option>
+      </select>
+      <p class="error" id="err" style="display:none"></p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="do-create">Create &amp; get code</button>
+        <button class="btn btn-ghost" id="go-back">Back</button>
+      </div>
+    </div>
+  `,
+
+  join: () => `
+    <div class="card">
+      <p class="card-title">Join a game</p>
+      <label>Your name</label>
+      <input type="text" id="f-name" placeholder="e.g. Alex" value="${S.name}" maxlength="30" />
+      <label>Game code</label>
+      <input type="text" id="f-code" placeholder="e.g. K7HQP" maxlength="5" style="text-transform:uppercase;letter-spacing:4px;font-size:20px;" />
+      <p class="error" id="err" style="display:none"></p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="do-join">Join game</button>
+        <button class="btn btn-ghost" id="go-back">Back</button>
+      </div>
+    </div>
+  `,
+
+  lobby: () => {
+    const g = S.game;
+    const isHost = S.name === g.creator;
+    const canStart = g.players.length >= 2;
+    const chips = g.players.map(p =>
+      `<span class="player-chip${p === g.creator ? ' host' : ''}">${p}${p === g.creator ? ' ✦' : ''}</span>`
+    ).join('');
+    return `
+      <div class="card">
+        <p class="card-title">Waiting for players</p>
+        <p class="section-label">Game code — share this with friends</p>
+        <span class="code-display">${S.code}</span>
+        <p class="section-label">Players joined (${g.players.length})</p>
+        <div class="player-list">${chips}</div>
+        <hr class="divider" />
+        ${isHost
+          ? `${!canStart ? '<p class="hint" style="margin-bottom:1rem;">You need at least 2 players to start.</p>' : ''}
+             <div class="btn-row">
+               <button class="btn btn-primary" id="do-start" ${!canStart ? 'disabled' : ''}>Start the game</button>
+               <button class="btn btn-ghost" id="do-refresh">Refresh</button>
+             </div>`
+          : `<div class="hint">Waiting for ${g.creator} to start...</div>
+             <div class="btn-row"><button class="btn btn-ghost" id="do-refresh">Refresh</button></div>`
+        }
+      </div>
+    `;
+  },
+
+  write: () => {
+    const g = S.game;
+    const isFirst = g.entries.length === 0;
+    const clue = isFirst ? null : getLastWords(g.entries[g.entries.length - 1].text, CLUE_WORDS);
+    const done = g.currentTurn;
+    const total = g.order.length;
+    return `
+      <div class="card">
+        <p class="card-title">Your turn to write</p>
+        <div class="progress-track"><div class="progress-fill" style="width:${Math.round(done/total*100)}%"></div></div>
+        <p class="progress-label">Turn ${done + 1} of ${total}</p>
+        ${isFirst
+          ? `<div class="hint">You're starting the story! Set the scene, introduce a character, drop into a moment. End with something that'll intrigue the next writer.</div>`
+          : `<p class="section-label">The story so far ends with...</p>
+             <div class="clue-box">"…${clue}"</div>
+             <div class="hint">Continue from here. You can only see those last words — that's the game. End your section in a way that leaves the next writer curious.</div>`
+        }
+        <label>Your addition</label>
+        <textarea id="f-text" placeholder="${isFirst ? 'It began on a Tuesday, which is the worst day for anything to begin…' : 'Continue the story…'}"></textarea>
+        <p class="error" id="err" style="display:none"></p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="do-submit">Submit &amp; pass it on</button>
+        </div>
+      </div>
+    `;
+  },
+
+  waiting: () => {
+    const g = S.game;
+    const next = g.order[g.currentTurn];
+    const done = g.currentTurn;
+    const total = g.order.length;
+    return `
+      <div class="card">
+        <p class="card-title">Your turn is in!</p>
+        <div class="progress-track"><div class="progress-fill" style="width:${Math.round(done/total*100)}%"></div></div>
+        <p class="progress-label">${done} of ${total} turns written</p>
+        ${done < total
+          ? `<div class="hint">It's <strong>${next}</strong>'s turn now. Ask them to open the link and check in!</div>
+             <div class="btn-row"><button class="btn btn-ghost" id="do-check">Check if it's my turn</button></div>`
+          : `<div class="success-hint">All turns are done — the story is complete! Tap below to read it together.</div>
+             <div class="btn-row"><button class="btn btn-primary" id="do-reveal">Read the full story</button></div>`
+        }
+      </div>
+    `;
+  },
+
+  reveal: () => {
+    const g = S.game;
+    const blocks = g.entries.map((e, i) => `
+      <div class="story-block">
+        <p class="story-author">${e.player}</p>
+        <p class="story-text">${e.text.replace(/\n/g,'<br>')}</p>
+      </div>
+      ${i < g.entries.length - 1 ? '<div class="story-divider">· · ·</div>' : ''}
+    `).join('');
+    return `
+      <div class="card">
+        <p class="card-title">The full story</p>
+        <p class="section-label" style="margin-bottom:1.5rem;">Written by ${g.players.join(', ')}</p>
+        ${blocks}
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="go-back-home">Play again</button>
+      </div>
+    `;
+  }
+};
+
+function err(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+function bind() {
+  const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+
+  on('go-create', () => { S.view = 'create'; render(); });
+  on('go-join', () => { S.view = 'join'; render(); });
+  on('go-back', () => { S.view = 'home'; render(); });
+  on('go-back-home', () => { S.view = 'home'; S.game = null; S.code = null; render(); });
+
+  on('do-create', async () => {
+    const name = document.getElementById('f-name').value.trim();
+    const turns = parseInt(document.getElementById('f-turns').value);
+    if (!name) { err('err', 'Please enter your name.'); return; }
+    S.name = name;
+    const code = genCode();
+    const game = { creator: name, players: [name], turnsPerPlayer: turns, order: [], currentTurn: 0, entries: [], started: false, finished: false };
+    await saveGame(code, game);
+    S.game = game; S.code = code; S.view = 'lobby'; render();
+  });
+
+  on('do-join', async () => {
+    const name = document.getElementById('f-name').value.trim();
+    const code = document.getElementById('f-code').value.trim().toUpperCase();
+    if (!name) { err('err', 'Please enter your name.'); return; }
+    if (code.length !== 5) { err('err', 'Please enter the 5-letter game code.'); return; }
+    const game = await loadGame(code);
+    if (!game) { err('err', 'Game not found. Double-check the code.'); return; }
+    S.name = name; S.code = code;
+    if (game.started) {
+      S.game = game;
+      if (game.finished) S.view = 'reveal';
+      else if (game.order[game.currentTurn] === name) S.view = 'write';
+      else S.view = 'waiting';
+      render(); return;
+    }
+    if (!game.players.includes(name)) {
+      if (game.players.length >= 10) { err('err', 'This game is full (10 players max).'); return; }
+      game.players.push(name);
+      await saveGame(code, game);
+    }
+    S.game = game; S.view = 'lobby'; render();
+  });
+
+  on('do-refresh', async () => {
+    const game = await loadGame(S.code);
+    if (!game) return;
+    S.game = game;
+    if (game.started) {
+      if (game.finished) S.view = 'reveal';
+      else if (game.order[game.currentTurn] === S.name) S.view = 'write';
+      else S.view = 'waiting';
+    }
+    render();
+  });
+
+  on('do-start', async () => {
+    const game = await loadGame(S.code);
+    if (!game) return;
+    const shuffled = shuffle(game.players);
+    let order = [];
+    for (let t = 0; t < game.turnsPerPlayer; t++) order = order.concat([...shuffled]);
+    const idx = order.indexOf(game.creator);
+    if (idx > 0) order.unshift(...order.splice(idx, 1));
+    game.order = order; game.started = true;
+    await saveGame(S.code, game);
+    S.game = game; S.view = 'write'; render();
+  });
+
+  on('do-submit', async () => {
+    const text = document.getElementById('f-text').value.trim();
+    if (text.length < 5) { err('err', 'Please write a bit more before submitting.'); return; }
+    const game = await loadGame(S.code);
+    if (!game) return;
+    game.entries.push({ player: S.name, text });
+    game.currentTurn++;
+    if (game.currentTurn >= game.order.length) game.finished = true;
+    await saveGame(S.code, game);
+    S.game = game;
+    S.view = game.finished ? 'reveal' : 'waiting';
+    render();
+  });
+
+  on('do-check', async () => {
+    const game = await loadGame(S.code);
+    if (!game) return;
+    S.game = game;
+    if (game.finished) { S.view = 'reveal'; render(); return; }
+    if (game.order[game.currentTurn] === S.name) { S.view = 'write'; render(); }
+  });
+
+  on('do-reveal', async () => {
+    const game = await loadGame(S.code);
+    if (!game) return;
+    S.game = game; S.view = 'reveal'; render();
+  });
+}
+
+render();
+</script>
+</body>
+</html>
